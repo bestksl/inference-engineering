@@ -115,15 +115,21 @@ Experiments are organized around explicit hypotheses and measurable outcomes.
 
 PD disaggregation is an exploratory topic, not a default optimization. Its usefulness depends on available devices, interconnect bandwidth, workload characteristics, and KV transfer overhead.
 
+### Field Notes & Guides
+
+Concrete engineering write-ups grounded in shipped source, with explicit evidence levels.
+
+- [Case Study: Running a 600 M Vision-Language Model on a Phone CPU](docs/case-d1-omni-on-device.md) — decision-head instead of token generation, ONNX Runtime 1.22 CPU/FP16/Q4 sessions, adaptive 30–60 s budgeting, and a measure-first optimization roadmap. *Timings loaded-only (software-rendered emulator); real device not-verified.*
+- [On-Device CPU Inference Playbook](docs/on-device-cpu-inference-playbook.md) — portable checklist: bounded latency, drop-don't-queue scheduling, quantization/operator coverage, threading, session warm-up, and how to measure without extrapolating from emulators.
+
 ## 06 / Repository Structure
 
 ```text
 inference-engineering/
 ├── README.md
 ├── docs/
-│   ├── frameworks.md
-│   ├── hardware-compatibility.md
-│   └── benchmarking-methodology.md
+│   ├── case-d1-omni-on-device.md
+│   └── on-device-cpu-inference-playbook.md
 ├── benchmarks/
 │   ├── configs/
 │   ├── scripts/
