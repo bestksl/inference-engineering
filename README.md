@@ -1,98 +1,159 @@
-# Inference Engineering
+# ⌘ Inference Engineering
 
-**Practical engineering for on-device LLM inference.**
+**On-device AI · Edge Inference · Runtime Optimization**
 
-Explore efficient local LLM inference on Android and PC, with a focus on KV cache management, memory efficiency, and reproducible performance evaluation.
+Researching and engineering efficient LLM inference across mobile devices, desktop systems, and edge computing platforms.
 
-KV cache optimization is the foundation. Prefill-Decode (PD) disaggregation is an exploratory direction.
-
-## Scope
-
-### 1. KV Cache Engineering
-
-Optimize the memory footprint and runtime behavior of KV cache in resource-constrained environments.
-
-Planned topics:
-- KV cache memory usage and profiling
-- Cache quantization and compression
-- Prefix caching and reuse
-- Cache eviction and memory-aware scheduling
-- Long-context inference under constrained memory budgets
-
-### 2. On-device Inference
-
-Study practical deployment and optimization across local inference runtimes.
-
-Target environments:
-- Android and mobile devices
-- Desktop and local GPU environments
-- [llama.cpp](https://github.com/ggml-org/llama.cpp)
-- [ONNX Runtime](https://github.com/microsoft/onnxruntime)
-
-The actual runtime and hardware support will be documented for each experiment.
-
-### 3. Prefill-Decode Disaggregation
-
-Explore whether separating prompt processing (Prefill) from token generation (Decode) can improve inference efficiency in local and edge environments.
-
-Planned topics:
-- Prefill and Decode performance characteristics
-- Heterogeneous CPU/GPU/NPU execution
-- KV cache transfer and reuse across execution stages
-- Communication overhead and end-to-end latency
-- Trade-offs between disaggregated and unified execution
-
-PD disaggregation is an exploratory topic, not an assumed optimization. Its benefits depend on hardware topology, memory architecture, transfer overhead, and workload characteristics.
-
-### 4. Benchmarking
-
-Every optimization should be evaluated against a baseline.
-
-Metrics may include:
-- Time to First Token (TTFT)
-- Time Per Output Token (TPOT)
-- Tokens per second
-- Peak memory usage
-- Cache hit rate, where applicable
-- Output quality and numerical differences
-
-Experiments should record hardware, model, runtime version, configuration, workload, and measurement methodology.
-
-## Project Status
-
-| Area | Status |
-|---|---|
-| Repository scope and research roadmap | Defined |
-| KV cache profiling and optimization | Planned |
-| Local inference benchmarks | Planned |
-| PD disaggregation experiments | Planned |
-
-Status will be updated as implementations and measurements become available. Planned work should not be interpreted as completed functionality.
-
-## Repository Structure
-
-```text
-inference-engineering/
-├── benchmarks/     # Reproducible benchmark workloads
-├── experiments/    # Optimization experiments
-├── docs/           # Design notes and findings
-└── README.md
-```
-
-Directories will be added as the corresponding work is implemented.
-
-## Principles
-
-- **Measure first:** identify bottlenecks before optimizing.
-- **Reproducibility:** document configurations and benchmark methodology.
-- **Hardware-aware:** distinguish device-specific results from general conclusions.
-- **Evidence over claims:** report regressions and negative results as well as improvements.
-- **Incremental engineering:** prioritize practical, measurable improvements.
-
-## License
-
-License to be determined.
+从端侧运行时到边缘推理引擎，研究模型部署、内存管理、异构计算与性能优化，探索不同硬件约束下的大模型推理边界。
 
 ---
 
-Part of [Light Witness Lab](https://github.com/light-witness-lab).
+## 01 / Scope
+
+Inference engineering across three deployment environments:
+
+| Environment | Focus |
+|---|---|
+| Mobile | Smartphones, tablets, and resource-constrained devices |
+| Desktop | Local LLM applications and CPU/GPU-accelerated inference |
+| Edge | Jetson-class devices, edge GPUs, and heterogeneous compute systems |
+
+The goal is not simply to run a model, but to understand **why it runs, how efficiently it runs, and where its bottlenecks lie.**
+
+## 02 / Frameworks & Runtimes
+
+### Mobile & On-device
+
+Frameworks designed for local inference, cross-platform execution, and device-level optimization.
+
+- [llama.cpp](https://github.com/ggml-org/llama.cpp) — Portable LLM inference, quantization, and hardware backends.
+- [MLC LLM](https://github.com/mlc-ai/mlc-llm) — Compiler-based deployment across supported device backends.
+- [ExecuTorch](https://github.com/pytorch/executorch) — PyTorch ecosystem for edge and mobile deployment.
+- [ONNX Runtime](https://github.com/microsoft/onnxruntime) — Cross-platform inference with hardware execution providers.
+- [LiteRT](https://github.com/google-ai-edge/LiteRT) — On-device inference within Google's AI Edge ecosystem.
+
+### Edge GPU & Local Serving
+
+Inference engines and serving systems relevant to GPU-equipped edge devices and local workstations.
+
+- [SGLang](https://github.com/sgl-project/sglang) — Serving architecture, scheduling, caching, and edge-GPU deployment.
+- [vLLM](https://github.com/vllm-project/vllm) — Memory management, batching, scheduling, and serving architecture.
+- [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) — NVIDIA GPU inference optimization and deployment.
+- [MLX](https://github.com/ml-explore/mlx) — Machine learning on Apple silicon.
+
+Framework selection depends on hardware, model architecture, runtime dependencies, memory capacity, and deployment requirements. These projects are not assumed to be interchangeable.
+
+## 03 / Core Engineering Topics
+
+### Model Deployment
+
+- Model formats, conversion, and compatibility.
+- Weight-only and activation quantization.
+- Model loading, initialization, and startup latency.
+- CPU, GPU, NPU, and accelerator backend selection.
+- Operator coverage, fallback behavior, and numerical consistency.
+
+### Memory & KV Cache
+
+- KV cache allocation and memory footprint.
+- Long-context inference under constrained memory.
+- Cache reuse and prefix caching.
+- KV cache quantization and memory reduction.
+- Cache eviction, lifecycle management, and memory fragmentation.
+
+### Execution Optimization
+
+- Prefill and decode performance.
+- Attention kernels and operator fusion.
+- CPU/GPU/NPU execution paths.
+- Speculative decoding and token generation efficiency.
+- Threading, batching, scheduling, and synchronization overhead.
+- Power consumption, thermal throttling, and sustained performance.
+
+### Edge Inference Architecture
+
+- Local inference services and API interfaces.
+- Heterogeneous execution across available compute devices.
+- Model partitioning and execution placement.
+- Prefill-Decode disaggregation where the hardware topology justifies it.
+- Edge-cloud collaboration and local-first inference.
+- Resource isolation and concurrent model execution.
+
+## 04 / Performance Evaluation
+
+Performance claims should be backed by reproducible measurements.
+
+| Metric | What it measures |
+|---|---|
+| TTFT | Time to first token |
+| TPOT | Average time per output token |
+| Throughput | Tokens generated per unit time |
+| Peak memory | Maximum runtime memory consumption |
+| Model loading time | Time required to make the model ready |
+| Energy consumption | Energy cost of inference, where measurable |
+| Sustained performance | Performance under prolonged workloads |
+
+Benchmarking principles:
+
+- Compare equivalent models, prompts, output lengths, and precision settings.
+- Record hardware, OS, driver, runtime, and configuration versions.
+- Separate cold-start performance from steady-state performance.
+- Report latency distributions rather than averages alone when possible.
+- Include memory usage and power constraints alongside speed.
+- Keep scripts, configurations, raw measurements, and analysis reproducible.
+
+## 05 / Research & Experiments
+
+Experiments are organized around explicit hypotheses and measurable outcomes.
+
+- **Runtime comparison** — Evaluate framework behavior on identical workloads.
+- **Quantization trade-offs** — Measure memory savings, latency, and quality impact.
+- **KV cache efficiency** — Investigate memory growth and long-context behavior.
+- **Heterogeneous execution** — Study backend selection and cross-device overhead.
+- **Edge serving** — Evaluate concurrency, scheduling, and resource contention.
+- **PD disaggregation** — Explore whether separating prefill and decode improves a specific edge workload after accounting for transfer costs.
+
+PD disaggregation is an exploratory topic, not a default optimization. Its usefulness depends on available devices, interconnect bandwidth, workload characteristics, and KV transfer overhead.
+
+## 06 / Repository Structure
+
+```text
+inference-engineering/
+├── README.md
+├── docs/
+│   ├── frameworks.md
+│   ├── hardware-compatibility.md
+│   └── benchmarking-methodology.md
+├── benchmarks/
+│   ├── configs/
+│   ├── scripts/
+│   └── results/
+├── experiments/
+│   ├── quantization/
+│   ├── kv-cache/
+│   ├── heterogeneous-execution/
+│   └── edge-serving/
+└── tools/
+```
+
+This structure is a proposed layout; directories should be added as corresponding work becomes available.
+
+## 07 / Engineering Principles
+
+- **Measure, don't assume.** Performance conclusions require evidence.
+- **Reproduce before comparing.** Keep workloads and configurations explicit.
+- **Optimize for constraints.** Memory, power, thermals, and latency all matter.
+- **Separate facts from hypotheses.** Document limitations and failed experiments.
+- **Prefer portable knowledge.** Distinguish framework-specific behavior from general inference principles.
+
+## 08 / Status
+
+This repository is a research and engineering workspace for on-device and edge inference.
+
+Framework coverage, benchmarks, and experimental results should be documented as they are validated. Planned work is not presented as completed implementation.
+
+---
+
+**Understand the runtime. Measure the bottleneck. Optimize the inference.**
+
+以实测为依据，以工程为边界。
