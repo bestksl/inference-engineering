@@ -134,3 +134,11 @@ measurements attached; the frozen baseline above is not rewritten.
 - Real-device latency, thermal/power behaviour, the live AE values, and the night-scene HDF glow
   are **not-verified** and require the Honor Vs3.
 - Aesthetic correctness is **not-verified** pending an independent human-labelled photo set.
+
+## 9. Amendments
+
+### v1.1 — 2026-10-25: vocabulary-count erratum and app roll-forward
+
+- Stage 4 says "17 composition vocabularies"; that count was already stale at the freeze point. The T10 wave produced 15 named styles plus conservative/generic fallbacks, T32 (before the freeze commit) added four more (`HORIZON_SPLIT`, `TOO_TIGHT`, `EDGE_CUT`, `MINIMAL`), and the edge regression baseline at `e891092` uses an expressed-style denominator of 19 (excluding the two fallbacks).
+- Current app mainline (org `49123ad`, 2026-10-24) ships **21 named styles plus the generic fallback** in `CompositionStyle.kt`; T73 added `DEPTH_LAYERS` (three depth bands), making the expressed-style denominator 20 in newer regression runs.
+- Nothing else in the frozen ten-stage table changes; this note is attached per the no-rewrite rule above.

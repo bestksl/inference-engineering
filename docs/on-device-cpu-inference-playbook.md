@@ -112,3 +112,18 @@ With no KV cache (decision-style models), watch instead:
 - [ ] Per-stage timings in logs; cold/warm and sustained measured on the target device.
 - [ ] Accuracy/gate probe passes for any quantization or resolution change.
 - [ ] Emulator results are labelled loaded-only; real-device and quality claims are not made until measured.
+
+### Reference application: street-snap d1 composition ranker (2026-10)
+
+How the shipped v1 pipeline maps to this checklist (evidence: the case study and frozen
+pipeline documents in this folder):
+
+1. Met — minimal artifact: three marker logits, explicit abstention states.
+2. Met — 30 s wall-clock budget, `RunOptions.setTerminate(true)` cooperative cancel, close joins the worker.
+3. Met — single-flight model job; four documented frame-drop/coalesce layers.
+4. Met — adaptive 30–60 s budget with 3–15 s cooldown; preview never blocks.
+5. Met — ORT 1.22 vendored AAR; fail-closed input IO assertions; XNNPACK→CPU fallback proven and relabelled.
+6. Met — one process-wide `OrtEnvironment`, sessions pre-warmed off the UI path before ImageAnalysis binding.
+7. Partially — per-stage timings exist in logs/diagnostics; cold/warm and sustained numbers are emulator-only so far. **Open: target-device measurement (Honor Vs3).**
+8. Met — pinned gate probes for the q8 failure, the 512/384/320 resolution change, and the prompt revision.
+9. Met — every record carries `loaded-only`; no real-device or aesthetic claim is made without measurement.
