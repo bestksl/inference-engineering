@@ -129,3 +129,38 @@ coaching, fitness reps, AR alignment): visibility-gated One-Euro with real `dt`,
 time constants by what each gate protects, and retargeted rather than rigidly overlaid
 guides. Keep the geometry pure and exhaustively tested; keep the device-dependent
 conclusions unclaimed until measured.
+
+---
+
+## Amendment 2026-10-25 (T115): co-located dual-figure visual grammar
+
+Bone-length retargeting (section 4) deliberately paints the target figure onto the
+observed body, which is geometrically precise but creates a figure-ground problem: two
+different meanings rendered as two same-weight solid skeletons on top of each other. The
+fix is depth encoding, not spatial separation:
+
+- **Observed = ghost.** Faint white *dashed* thin line (1.5 dp, α ~.5), small solid
+  joints. Dashes read as "transient/measured" and stay distinguishable from any solid
+  guide even where they coincide. When the pose is achieved the ghost fades to α ~.18 so
+  only the result remains.
+- **Target = bold anchored guide.** Solid 3.5 dp amber line, a soft low-alpha wide glow
+  underneath for bright backgrounds, and **hollow ring joints with a dark outline** —
+  rings read as "destinations", and the outline survives on any scene content.
+- **Delta channel, not connector spaghetti.** For each limb joint whose observed position
+  is more than a threshold (~0.06 normalised frame units) from its target, draw a slow
+  breathing ring at the target joint. It answers "which joint goes where" per glance.
+  Drawing observed→target connector lines was considered and rejected: twelve moving
+  connectors add noise faster than they add guidance.
+- **Legend once.** A one-line caption in the hint card ("white dashed = you, rings =
+  target joints") closes the encoding loop; the demo browser renders the same ringed
+  target before the camera is ever used.
+- The catalogue doubled to twelve poses the same evening because the change stayed in
+  the tested geometry layer; visual readability itself cannot be JVM-asserted and remains
+  a device-pass item (threshold 0.06 included).
+
+A second, organisational lesson: keep coaching content as data external to the inference
+stack. The pose templates now exist as a CC0 JSON + generated-SVG asset library
+(`edge-model-solutions/assets/pose-library`) mirroring the executable catalogue, and the
+classic composition patterns sit beside it with explicit on-device/unsupported mapping.
+Inference code consumes landmarks; coaching vocabulary and reference figures evolve
+independently and never require a model change.
