@@ -78,7 +78,7 @@ The target handset (Honor Vs3) has not run the pipeline. **not-verified.**
    to a later frame.
 2. **Abstention is first-class** — the model only overrides the rule layer through two numeric gates
    and an order-consistency check; gates are observable diagnostics, not calibrated probabilities.
-3. **The photo is sacred** — overlays never alter `ImageCapture` output; the long-press trial zoom
+3. **The photo is never modified** — overlays never alter `ImageCapture` output; the long-press trial zoom
    is a display transform proven to leave JPEGs at full 3:4.
 4. **Only real values on screen** — ISO/shutter/aperture come from actual `CaptureResult`s;
    capabilities gate which controls exist; no fabricated AUTO numbers.

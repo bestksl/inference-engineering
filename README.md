@@ -1,169 +1,30 @@
-# ⌘ Inference Engineering
+# Inference Engineering
 
-**On-device AI · Edge Inference · Runtime Optimization**
+端侧与边缘推理的工程研究仓：拆解单芯片上的推理链路，测量时间与内存的实际分布，检验云端推理技术在设备侧的成立条件。
 
-Researching and engineering efficient LLM inference across mobile devices, desktop systems, and edge computing platforms.
+Engineering research for inference on a single SoC: where the time goes, what the memory costs, and which cloud-era techniques survive device constraints. The first workload is the in-camera composition and pose inference in [`street-snap`](https://github.com/light-witness-lab/street-snap).
 
-从端侧运行时到边缘推理引擎，研究模型部署、内存管理、异构计算与性能优化，探索不同硬件约束下的大模型推理边界。
+Evidence levels used everywhere: `verified` (measured on named hardware) · `loaded-only` (runs on emulator/desktop) · `not-verified`. Emulator numbers are never extrapolated to a real SoC.
 
----
+## Field notes — what was built and what came out
 
-## 01 / Scope
+| Note | Result | Status |
+| --- | --- | --- |
+| [Case: running a 600 M VLM on a phone CPU](docs/case-d1-omni-on-device.md) | A bidirectional decision head replaces autoregression: one forward pass, three logits, no KV cache, no output parsing. Three sessions (vision FP16/XNNPACK, embeddings + decision Q4). At 540×1170 a ranking takes ≈16–22 s; 1080×2340 frequently hits the 30 s budget and correctly times out. Adaptive budget `clamp(elapsed·1.5 + 2 s, 30–60 s)`. Background session warm-up applied 2026-10-20; INT8 vision tower queued pending calibration. | loaded-only (software-rendered emulator) |
+| [CPU inference playbook](docs/on-device-cpu-inference-playbook.md) | Portable checklist ordered by leverage: reshape the workload before tuning kernels (generative→decision, single-pass candidate sheets, cheap always-on first stage), bounded self-limiting latency, drop-don't-queue scheduling, quantization/operator coverage, threading, warm-up, measure on the target device. | engineering checklist |
+| [Composition pipeline v1 (frozen baseline)](docs/on-device-composition-pipeline-v1.md) | End-to-end shipping baseline: four frame-drop/coalescing layers, a pure-Kotlin rule layer at ≈2.4 evaluations/s drawing the guide immediately, one contact-sheet forward on the 600 M model, margin + permutation adoption gates. v2 optimization backlog itemized with evidence requirements; nothing in v2 has shipped. | loaded-only |
+| [Pose coaching: filtering and retargeting](docs/on-device-pose-overlay-techniques.md) | One-Euro filtering on irregular live-stream cadence with visibility gating and 0.35 s hold-through, three-layer presence/pose debounce, bone-length retargeting of the target figure onto the observed body. | experimental (synthetic-geometry probes) |
 
-Inference engineering across three deployment environments:
+## Goal and current gap
 
-| Environment | Focus |
-|---|---|
-| Mobile | Smartphones, tablets, and resource-constrained devices |
-| Desktop | Local LLM applications and CPU/GPU-accelerated inference |
-| Edge | Jetson-class devices, edge GPUs, and heterogeneous compute systems |
+- **Goal:** content-adaptive understanding over a continuously analyzing viewfinder.
+- **Today:** gated decisions at 1–3 per second; the model only picks between rule-layer candidates A/B/C or abstains. Continuous analysis is blocked by per-ranking latency (≈16–22 s on the emulator at 540×1170).
+- **Next gate:** segmented p50/p95 latency and thermal-steady-state measurement on the Honor Vs3, then the INT8 vision tower with a gate-accuracy check. The executable benchmark protocol lives in the sibling repo [`edge-model-solutions/benchmarks/inference-perf`](https://github.com/light-witness-lab/edge-model-solutions/tree/main/benchmarks/inference-perf).
 
-The goal is not simply to run a model, but to understand **why it runs, how efficiently it runs, and where its bottlenecks lie.**
+## Principles
 
-## 02 / Frameworks & Runtimes
-
-### Mobile & On-device
-
-Frameworks designed for local inference, cross-platform execution, and device-level optimization.
-
-- [llama.cpp](https://github.com/ggml-org/llama.cpp) — Portable LLM inference, quantization, and hardware backends.
-- [MLC LLM](https://github.com/mlc-ai/mlc-llm) — Compiler-based deployment across supported device backends.
-- [ExecuTorch](https://github.com/pytorch/executorch) — PyTorch ecosystem for edge and mobile deployment.
-- [ONNX Runtime](https://github.com/microsoft/onnxruntime) — Cross-platform inference with hardware execution providers.
-- [LiteRT](https://github.com/google-ai-edge/LiteRT) — On-device inference within Google's AI Edge ecosystem.
-
-### Edge GPU & Local Serving
-
-Inference engines and serving systems relevant to GPU-equipped edge devices and local workstations.
-
-- [SGLang](https://github.com/sgl-project/sglang) — Serving architecture, scheduling, caching, and edge-GPU deployment.
-- [vLLM](https://github.com/vllm-project/vllm) — Memory management, batching, scheduling, and serving architecture.
-- [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) — NVIDIA GPU inference optimization and deployment.
-- [MLX](https://github.com/ml-explore/mlx) — Machine learning on Apple silicon.
-
-Framework selection depends on hardware, model architecture, runtime dependencies, memory capacity, and deployment requirements. These projects are not assumed to be interchangeable.
-
-## 03 / Core Engineering Topics
-
-### Model Deployment
-
-- Model formats, conversion, and compatibility.
-- Weight-only and activation quantization.
-- Model loading, initialization, and startup latency.
-- CPU, GPU, NPU, and accelerator backend selection.
-- Operator coverage, fallback behavior, and numerical consistency.
-
-### Memory & KV Cache
-
-- KV cache allocation and memory footprint.
-- Long-context inference under constrained memory.
-- Cache reuse and prefix caching.
-- KV cache quantization and memory reduction.
-- Cache eviction, lifecycle management, and memory fragmentation.
-
-### Execution Optimization
-
-- Prefill and decode performance.
-- Attention kernels and operator fusion.
-- CPU/GPU/NPU execution paths.
-- Speculative decoding and token generation efficiency.
-- Threading, batching, scheduling, and synchronization overhead.
-- Power consumption, thermal throttling, and sustained performance.
-
-### Edge Inference Architecture
-
-- Local inference services and API interfaces.
-- Heterogeneous execution across available compute devices.
-- Model partitioning and execution placement.
-- Prefill-Decode disaggregation where the hardware topology justifies it.
-- Edge-cloud collaboration and local-first inference.
-- Resource isolation and concurrent model execution.
-
-## 04 / Performance Evaluation
-
-Performance claims should be backed by reproducible measurements.
-
-| Metric | What it measures |
-|---|---|
-| TTFT | Time to first token |
-| TPOT | Average time per output token |
-| Throughput | Tokens generated per unit time |
-| Peak memory | Maximum runtime memory consumption |
-| Model loading time | Time required to make the model ready |
-| Energy consumption | Energy cost of inference, where measurable |
-| Sustained performance | Performance under prolonged workloads |
-
-Benchmarking principles:
-
-- Compare equivalent models, prompts, output lengths, and precision settings.
-- Record hardware, OS, driver, runtime, and configuration versions.
-- Separate cold-start performance from steady-state performance.
-- Report latency distributions rather than averages alone when possible.
-- Include memory usage and power constraints alongside speed.
-- Keep scripts, configurations, raw measurements, and analysis reproducible.
-
-## 05 / Research & Experiments
-
-Experiments are organized around explicit hypotheses and measurable outcomes.
-
-- **Runtime comparison** — Evaluate framework behavior on identical workloads.
-- **Quantization trade-offs** — Measure memory savings, latency, and quality impact.
-- **KV cache efficiency** — Investigate memory growth and long-context behavior.
-- **Heterogeneous execution** — Study backend selection and cross-device overhead.
-- **Edge serving** — Evaluate concurrency, scheduling, and resource contention.
-- **PD disaggregation** — Explore whether separating prefill and decode improves a specific edge workload after accounting for transfer costs.
-
-PD disaggregation is an exploratory topic, not a default optimization. Its usefulness depends on available devices, interconnect bandwidth, workload characteristics, and KV transfer overhead.
-
-### Field Notes & Guides
-
-Concrete engineering write-ups grounded in shipped source, with explicit evidence levels.
-
-- [Case Study: Running a 600 M Vision-Language Model on a Phone CPU](docs/case-d1-omni-on-device.md) — decision-head instead of token generation, ONNX Runtime 1.22 CPU/FP16/Q4 sessions, adaptive 30–60 s budgeting, and a measure-first optimization roadmap. *Timings loaded-only (software-rendered emulator); real device not-verified.*
-- [On-Device CPU Inference Playbook](docs/on-device-cpu-inference-playbook.md) — portable checklist: bounded latency, drop-don't-queue scheduling, quantization/operator coverage, threading, session warm-up, and how to measure without extrapolating from emulators.
-- [On-Device Composition Pipeline — v1 Architecture](docs/on-device-composition-pipeline-v1.md) — frozen v1 baseline of the camera-to-guide pipeline (four-layer frame dropping, rule layer, contact sheet, three ONNX sessions, adoption gates, adaptive cadence), known bottlenecks, and a measured-evidence v2 optimization backlog. *Loaded-only; real device not-verified.*
-- [On-Device Pose Coaching: Temporal Filtering and Skeleton Retargeting](docs/on-device-pose-overlay-techniques.md) — visibility-gated One-Euro filtering on irregular live-stream cadence, three-layer presence/pose debounce, and bone-length retargeting of the target figure onto the observed body. *Experimental; synthetic-geometry probes only, real subjects not-verified.*
-
-## 06 / Repository Structure
-
-```text
-inference-engineering/
-├── README.md
-├── docs/
-│   ├── case-d1-omni-on-device.md
-│   ├── on-device-composition-pipeline-v1.md
-│   ├── on-device-cpu-inference-playbook.md
-│   └── on-device-pose-overlay-techniques.md
-├── benchmarks/
-│   ├── configs/
-│   ├── scripts/
-│   └── results/
-├── experiments/
-│   ├── quantization/
-│   ├── kv-cache/
-│   ├── heterogeneous-execution/
-│   └── edge-serving/
-└── tools/
-```
-
-This structure is a proposed layout; directories should be added as corresponding work becomes available.
-
-## 07 / Engineering Principles
-
-- **Measure, don't assume.** Performance conclusions require evidence.
-- **Reproduce before comparing.** Keep workloads and configurations explicit.
-- **Optimize for constraints.** Memory, power, thermals, and latency all matter.
-- **Separate facts from hypotheses.** Document limitations and failed experiments.
-- **Prefer portable knowledge.** Distinguish framework-specific behavior from general inference principles.
-
-## 08 / Status
-
-This repository is a research and engineering workspace for on-device and edge inference.
-
-Framework coverage, benchmarks, and experimental results should be documented as they are validated. Planned work is not presented as completed implementation.
-
----
-
-**Understand the runtime. Measure the bottleneck. Optimize the inference.**
-
-以实测为依据，以工程为边界。
+- **Measure, don't assume.** A kernel setting ships only after on-device measurement.
+- **Reshape before optimizing.** Decision outputs, shared-prefix single passes, and cheap first stages beat thread/quantization tuning; see the playbook's section 0.
+- **Bound the latency.** Drop stale frames, never queue them; every slow path must degrade to a usable preview.
+- **Separate facts from hypotheses.** Failed experiments and inapplicable cloud techniques are documented as such (case study §8 lists the cloud concepts that do not apply to a zero-token workload).
+- **Keep it reproducible.** Record hardware, OS, runtime, revision, quantization, and the raw numbers.
