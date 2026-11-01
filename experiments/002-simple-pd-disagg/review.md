@@ -1,5 +1,8 @@
 # 单机 P/D 分离实验评审 · Single-Node Prefill/Decode Disaggregation
 
+> 本文是**方案 002 的评审底稿**（为什么做、比例经济学、12 方案对比、E0–E4 设计）；
+> 实现路径（P/D 怎么起、KV 怎么交、请求怎么流）看同目录 [README.md](README.md)。
+>
 > 状态：方案评审（2026-11-01），未开始实测。
 > 实验机：Mac Studio (M1 Max, 64 GB 统一内存, macOS 15.7.3)。
 > 上游可行性调研（DeepInfer/SGLang/Mooncake/llama.cpp issue 取证，2026-10-27~30）在私有学习仓
@@ -36,7 +39,7 @@ P/D 分离把 prefill（compute-bound）与 decode（memory-bandwidth-bound）�
 | H3 比例适配 | 1:2 的 D 池在多用户长输出下改善人均吞吐 | 大概率被统计复用反杀；测了才知道 |
 
 实验的产出目标是**用数据证实或证伪 H1–H3**，而不是证明「单机 PD 有收益」。
-全部被证伪同样是有价值的工程结论（与 [on-device CPU inference playbook](../on-device-cpu-inference-playbook.md)
+全部被证伪同样是有价值的工程结论（与 [on-device CPU inference playbook](../../docs/on-device-cpu-inference-playbook.md)
 第 0 节同构：先重塑问题，再调 kernel）。
 
 ## 2. 方案评审
@@ -91,7 +94,7 @@ A3/A4 选做，C1 等第二台设备。SGLang/vLLM/Mooncake 这一族在 macOS �
 
 ## 5. 与仓库其他工作的关系
 
-- 方法论沿用 [on-device-cpu-inference-playbook](../on-device-cpu-inference-playbook.md)：
+- 方法论沿用 [on-device-cpu-inference-playbook](../../docs/on-device-cpu-inference-playbook.md)：
   先重塑问题、硬截止、测量优先；本实验是「云技术设备侧成立条件」在生成式 LLM 上的延伸。
 - 若 E2（CPU 当 P）成立，对 street-snap 类设备的启发是「廉价常在线支路 vs 稀疏重支路」之外的
   另一种分工范式，但只作参考，不直接进入 App 方案。

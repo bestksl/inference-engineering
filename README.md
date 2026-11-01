@@ -74,13 +74,16 @@ v2 每项都要求带 before/after 数据、以 v1.x amendment 形式落档；�
 
 ## Field notes — what was built and what came out
 
+> **推理链路实验（编号方案 001/002，每份含架构图、推理链路与落地形态）：[experiments/](experiments/README.md)**
+
 | Note | Result | Status |
 | --- | --- | --- |
 | [Case: running a 600 M VLM on a phone CPU](docs/case-d1-omni-on-device.md) | A bidirectional decision head replaces autoregression: one forward pass, three logits, no KV cache, no output parsing. Three sessions (vision FP16/XNNPACK, embeddings + decision Q4). At 540×1170 a ranking takes ≈16–22 s; 1080×2340 frequently hits the 30 s budget and correctly times out. Adaptive budget `clamp(elapsed·1.5 + 2 s, 30–60 s)`. Background session warm-up applied 2026-10-20; INT8 vision tower queued pending calibration. | loaded-only (software-rendered emulator) |
 | [CPU inference playbook](docs/on-device-cpu-inference-playbook.md) | Portable checklist ordered by leverage: reshape the workload before tuning kernels (generative→decision, single-pass candidate sheets, cheap always-on first stage), bounded self-limiting latency, drop-don't-queue scheduling, quantization/operator coverage, threading, warm-up, measure on the target device. | engineering checklist |
 | [Composition pipeline v1 (frozen baseline)](docs/on-device-composition-pipeline-v1.md) | End-to-end shipping baseline: four frame-drop/coalescing layers, a pure-Kotlin rule layer at ≈2.4 evaluations/s drawing the guide immediately, one contact-sheet forward on the 600 M model, margin + permutation adoption gates. v2 optimization backlog itemized with evidence requirements; nothing in v2 has shipped. | loaded-only |
 | [Pose coaching: filtering and retargeting](docs/on-device-pose-overlay-techniques.md) | One-Euro filtering on irregular live-stream cadence with visibility gating and 0.35 s hold-through, three-layer presence/pose debounce, bone-length retargeting of the target figure onto the observed body. | experimental (synthetic-geometry probes) |
-| [Single-node P/D disaggregation review](docs/single-node-pd/README.md) | Does prefill/decode disaggregation survive a single host (M1 Max, 2026-11-01)? Ratio tuning (1P:2D) only works with independent resource pools; on one shared GPU it replicates weights and loses statistical multiplexing. Three falsifiable hypotheses (CPU/P vs GPU/D split is the credible one), 12 options reviewed (llama.cpp slot handoff is the lead), E0–E4 measurement plan. | not-verified (review only) |
+| [Experiment 001 · on-device VLM implementation path](experiments/001-on-device-vlm/README.md) | 手机 CPU 上的 600M 决策模型：双支路（MediaPipe 姿态 + ONNX 稀疏排序）、一帧到一个决策的完整链路与落地形态，同名 field notes 的结构化实现路径版。 | loaded-only / frozen v1 |
+| [Experiment 002 · single-host simple P/D](experiments/002-simple-pd-disagg/README.md) | 单机简易 P/D：双 llama-server（Metal），P 端 `n_predict:0` 只 prefill，slot KV 文件交接，D 端 restore 后零重算 decode。含拓扑图、四步时序、blob 规模与 save/restore 计时口径、分阶段计划。[评审底稿](experiments/002-simple-pd-disagg/review.md)：比例经济学/12 方案/E0–E4。 | not-verified（设计完成，阶段 1 待跑） |
 
 ## Goal and current gap
 
