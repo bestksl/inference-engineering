@@ -1,0 +1,10 @@
+# 运行期产物，不入库（models/kv/logs/prompts/results 目录由 serve.sh 运行时创建）
+/models/*
+/kv/*
+/logs/*
+/prompts/*
+/results/*
+*.bin
+llama-server
+__pycache__/
+*.pyc

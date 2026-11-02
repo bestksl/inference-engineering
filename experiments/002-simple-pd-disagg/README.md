@@ -136,6 +136,10 @@ def generate(prompt, n_predict):
 实验序列 E0–E4 与扫点表沿用 [review.md](review.md) 第 3 节；结果写入本目录
 `results-stage1.md`（跑通后再建，不预写）。
 
+阶段 1 的可运行脚手架已落地在 [pd-lab/](pd-lab/)：`serve.sh` 起 P/D/baseline 三个
+llama-server，`router.py` 跑四步编排，`bench.py check` 即上面三项验收；
+不含 llama.cpp 也可先 `python3 router.py --selftest` 用假后端验证编排逻辑。
+
 ## 7. 边界与证据
 
 - `not-verified`：以上全部行为在本机实测前均为设计；尤其「restore + 再请求」的零 prefill
