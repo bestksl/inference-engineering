@@ -34,6 +34,8 @@ export PD_MODEL="$PWD/models/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf"
 ./serve.sh up                      # 起 P:8081 + D:8082，等两个都 healthy
 python3 router.py                  # 另开终端，router 监听 :8090
 python3 bench.py mkprompt --tokens 8000 --out prompts/8k.txt
+python3 bench.py pd --prompt-file prompts/8k.txt --n-predict 32   # 先只验四步
+./serve.sh baseline                # 再起单体 :8080（三实例同跑，见内存注意）
 python3 bench.py check --prompt-file prompts/8k.txt --n-predict 32
 ```
 
@@ -72,5 +74,6 @@ python3 bench.py baseline --prompt-file prompts/8k.txt --n-predict 32
 - 单飞：router 忙时直接 503，不排队（与 App 侧 drop-don't-queue 同一纪律）；
   1:2 配比与并发扫点是阶段 2，本版不做。
 - 正确性阶段固定 temp=0；sampler/RNG 是否随 slot 迁移不做假设。
-- 32k 上下文 + 双实例各存一份权重，64 GB 机器内存余量自行留意（`logs/*.log` 有加载量）。
+- 32k 上下文 + 每实例各存一份权重：P+D 双实例约 2×；跑 `check` 时 baseline 是第三份，
+  64 GB 机器内存余量自行留意（`logs/*.log` 开头有加载量），紧张可先 `./serve.sh down` 再分批起。
 - `kv/` 必须是两端**同一个绝对路径目录**；`serve.sh` 已保证。
